@@ -21,7 +21,7 @@ public class TestFilter {
 
     @Test
     public void test1(){
-        String s = sensitiveFilter.filter("操taaaah");
+        String s = sensitiveFilter.filter("fabc");
         System.out.println(s);
     }
 

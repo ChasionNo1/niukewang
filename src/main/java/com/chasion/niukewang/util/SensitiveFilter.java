@@ -79,44 +79,56 @@ public class SensitiveFilter {
         int pos = 0;
         TrieNode cur = rootNode;
         StringBuilder after = new StringBuilder();
-        while (pos < len){
-            // 遍历从start到pos之间的字符，如果是敏感词，则替换，如果不是，则start后移，进入下一轮判断
-            char c = text.charAt(pos);
-            // 跳过符号
-            if (isSymbol(c)){
-                if (cur == rootNode){
-                    after.append(c);
-                    start++;
+        while (start < len){
+            if (pos < len){
+                // 过滤字符
+                char c = text.charAt(pos);
+                if (isSymbol(c)){
+                    // 保留开始的特殊字符
+                    if (cur == rootNode){
+                        after.append(c);
+                        start++;
+                    }
+                    pos++;
+                    continue;
                 }
-                pos++;
-                continue;
-            }
+                // 检查下级节点
+                cur = cur.getSubNode(c);
+                if (cur == null){
+                    // 在前缀树中没有找到当前字符
+                    // 以start开头的字符串不是敏感词
+                    // 如：敏感词是 a b c
+                    // 此时情况是   a a b
+                    // 不能构成完整了敏感词，说明以a开始头的词不是敏感词，则添加a即可，再从第二个a从新开始判断
+                    after.append(text.charAt(start));
+                    pos = ++start;
+                    cur = rootNode;
+                }else if (cur.isKeywordEnd()){
+                    // 如果找到的正好是敏感词结尾，从start到pos是个完整的敏感词
+                    after.append(REPLACEMENT);
+                    // a b c
+                    // a b c d e f
+                    start = ++pos;
+                    cur = rootNode;
 
-            // 判断是否敏感
-            // 分三种情况
-            // 1、从start 到 pos不是敏感词
-            cur = cur.getSubNode(c);
-            if (cur == null){
-                // 添加start，然后指针后移，继续判断
+                }else {
+                    // 此时在敏感词中间位置，未到达结尾，继续往下遍历
+                    pos++;
+                }
+
+            }else {
+                // pos 遍历越界仍未匹配到敏感词
+                // 此时是尾指针越界，头指针还没越界
+                // 例如 f a b c
+                // start 在 f   pos在c
+                // fabc不是以f开头的敏感词，过滤不掉而此时pos也到了末尾，跳出循环结束了
+                // 没有判断从start到pos子串的情况
+                // 所以，以start作为while循环判断的标准，遍历完子串情况
                 after.append(text.charAt(start));
                 pos = ++start;
                 cur = rootNode;
-            }else if (cur.isKeywordEnd()){
-                // 发现是敏感词，匹配完成
-                after.append(REPLACEMENT);
-                // 直接跳过敏感词，开始接下来的判断
-                start = ++pos;
-                cur = rootNode;
-            }else {
-                // 检查下一个
-                pos++;
             }
-
         }
-        // 跳出循环是pos在末尾，然后再加+，不满足条件
-        // 也就说，不满足三种情况中的前两种，也就是不完全是敏感词
-        // 如 a b c  -- a  b  d
-        after.append(text.substring(start));
         return after.toString();
     }
 

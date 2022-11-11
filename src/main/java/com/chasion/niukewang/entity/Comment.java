@@ -19,8 +19,9 @@ public class Comment {
     // 评论的类型，是给帖子评论，还是给评论回复，1是给帖子，2是回复
     private int entityType;
     // 帖子的id，或者是回复的id
+    // 对帖子的评论的，帖子的id
     private int entityId;
-    // 回复对方的id
+    // 回复评论，评论的作者id
     private int targetId;
     private String content;
     private int status;
